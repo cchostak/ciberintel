@@ -23,46 +23,63 @@ then
 fi
 
 #MySQL variables
-DB_USER=
+DB_USER=root
 DB_PASS=
 
 #Alter to geoiplookup path, generaly /usr/local/share/GeoIP
-GEOIP=/usr/local/share/GeoIP/geo.dat;
+GEOIP=./geo.dat
 
-#Create database and tables
+#Creates database
 mysql --user=$DB_USER --password=$DB_PASS<<EOF
 CREATE DATABASE $filename;
+USE $filename;
+CREATE TABLE $filename (ID int NOT NULL AUTO_INCREMENT, DOMAIN varchar(255), DATE TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, LOOKUP_1 varchar(255), LOOKUP_2 varchar(255), LOOKUP_3 varchar(255), DOMAINNAME varchar(255), UPDATEDDATE varchar(255), CREATIONDATE varchar(255), COUNTRY varchar(255), STATE varchar(255), STATE_DESC varchar(255), CITY varchar(255), LAT varchar(255), LON varchar(255), PRIMARY KEY(ID));
 EOF
 
 #Create a directory to store the files that will be generate below
 mkdir $filename
 
-#Iterates through the file created above, reading line by line, and doing at each step the geoiplookup, whois and nslookup programs
 while IFS='' read -r line || [[ -n "$line" ]]; do
-	nmap -p 80,443 $line | awk '/tcp/ {print $1, $2, $3}' >> "./$filename/$filename-NMAP.txt"
+        sleep 0.1
+        nsl1="$(nslookup $line | grep Address | awk  '/Address/ {print $2}' | awk 'NR==1')"
+
+        sleep 0.1
+        nsl2="$(nslookup $line | grep Address | awk  '/Address/ {print $2}' | awk 'NR==1')"
+
+        sleep 0.1
+        nsl3="$(nslookup $line | grep Address | awk  '/Address/ {print $2}' | awk 'NR==1')"
+
+        sleep 0.1
+        whsdn="$(whois $line | grep "Domain Name" | awk  '{print $3}' | tr -cd 'A-Za-z0-9_.-')"
+
+        sleep 0.1
+        whsud="$(whois $line | grep "Updated Date" | awk  '{print $3}' | tr -cd 'A-Za-z0-9_.-')"
+
+        sleep 0.1
+        whscd="$(whois $line | grep "Creation Date" | awk  '{print $3}' | tr -cd 'A-Za-z0-9_.-')"
+
+        sleep 0.1
+        gilCountry="$(geoiplookup -f $GEOIP $line | awk -F',' '{print $2}' | sed -e 's/Rev 1://g' | tr -cd 'A-Za-z0-9_.-' )"
+
+        sleep 0.1
+		gilState="$(geoiplookup -f $GEOIP $line | awk -F',' '{print $3}' | sed -e 's/Rev 1://g' | tr -cd 'A-Za-z0-9_.-' )"
+
+        sleep 0.1
+		gilStateDesc="$(geoiplookup -f $GEOIP $line | awk -F',' '{print $4}' | sed -e 's/Rev 1://g' | tr -cd 'A-Za-z0-9_.-' )"
+
+        sleep 0.1
+		gilCity="$(geoiplookup -f $GEOIP $line | awk -F',' '{print $5}' | sed -e 's/Rev 1://g' | tr -cd 'A-Za-z0-9_.-' )"
+
+        sleep 0.1
+		gilLat="$(geoiplookup -f $GEOIP $line | awk -F',' '{print $7}' | sed -e 's/Rev 1://g' | tr -cd 'A-Za-z0-9_.-' )"
+
+        sleep 0.1
+		gilLon="$(geoiplookup -f $GEOIP $line | awk -F',' '{print $8}' | sed -e 's/Rev 1://g' | tr -cd 'A-Za-z0-9_.-' )"
+
+        sleep 0.1
+		webkit-image-gtk http://$line > ./$filename/$line.png
+	mysql --user=$DB_USER --password=$DB_PASS $filename -e 'INSERT INTO '$filename' (DOMAIN, LOOKUP_1, LOOKUP_2, LOOKUP_3, DOMAINNAME, UPDATEDDATE, CREATIONDATE, COUNTRY, STATE, STATE_DESC, CITY, LAT, LON) VALUES ("'$line'", "'$nsl1'", "'$nsl2'", "'$nsl3'", "'$whsdn'", "'$whsud'", "'$whscd'", "'$gilCountry'", "'$gilState'", "'$gilStateDesc'", "'$gilCity'", "'$gilLat'", "'$gilLon'");'
 done < "$filepath"
-
-while IFS='' read -r line || [[ -n "$line" ]]; do
-	whois $line >> ./$filename/$filename-WHOIS.txt
-done < "$filepath"
-
-while IFS='' read -r line || [[ -n "$line" ]]; do
-	nslookup $line | awk 'BEGIN {ORS=" |Answer from, "}, /Address/ {print $1, $2}' >> ./$filename/$filename-NSLOOKUP.txt
-done < "$filepath"
-
-while IFS='' read -r line || [[ -n "$line" ]]; do
-	geoiplookup -f $GEOIP $line >> ./$filename/$filename-GEOIP.txt
-done < "$filepath"
-
-while IFS='' read -r line || [[ -n "$line" ]]; do
-	webkit-image-gtk http://$line > ./$filename/$line.png
-done < "$filepath"
-
-#Reads the GeoIP generated file and filters only the columns that provide useful data
-cat ./$filename/$filename-GEOIP.txt | awk -F',' '{print $2, $3, $4, $5, $7, $8}' | sed -e 's/Rev 1://g' >> ./$filename/$filename-GEO-IP.txt
-
-#Reads the WhoIS generated file and filters only the columns that provide useful data
-cat ./$filename/$filename-WHOIS.txt | awk '/Name Server:/ {print $1, $2, $3}; /Domain Name:/ {print $1, $2, $3}; /Creation Date:/ {print $1, $2, $3}; /Updated Date:/ {print $1, $2, $3}; /Registry Expiry Date:/ {print $1, $2, $3, $4}; /Admin Email:/ {print $1, $2, $3}' >> ./$filename/$filename-WHO-IS.txt
 
 #Removes unwanted files
 rm -rf /$filename/$filename-GEOIP.txt /$filename/$filename-WHOIS.txt

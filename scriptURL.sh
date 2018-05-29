@@ -27,7 +27,7 @@ A1=URLCRAZY
 
 #MySQL variables
 DB_USER=root
-DB_PASS=qsmhaz57s6
+DB_PASS=
 
 #Alter to urlcrazy path
 URLCRAZY=/home/urlcrazy-0.5/urlcrazy
