@@ -22,6 +22,9 @@ then
 	read filename
 fi
 
+sufix="PIC"
+filename=$filename$sufix
+
 #MySQL variables
 DB_USER=root
 DB_PASS=
