@@ -33,7 +33,7 @@ GEOIP=./geo.dat
 mysql --user=$DB_USER --password=$DB_PASS<<EOF
 CREATE DATABASE $filename;
 USE $filename;
-CREATE TABLE $filename (ID int NOT NULL AUTO_INCREMENT, DOMAIN varchar(255), DATE TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, LOOKUP_1 varchar(255), LOOKUP_2 varchar(255), LOOKUP_3 varchar(255), DOMAINNAME varchar(255), UPDATEDDATE varchar(255), CREATIONDATE varchar(255), COUNTRY varchar(255), STATE varchar(255), STATE_DESC varchar(255), CITY varchar(255), LAT varchar(255), LON varchar(255), PRIMARY KEY(ID));
+CREATE TABLE $filename (ID int NOT NULL AUTO_INCREMENT, DOMAIN varchar(255), DATE TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, LOOKUP_1 varchar(255), LOOKUP_2 varchar(255), LOOKUP_3 varchar(255), DOMAINNAME varchar(255), UPDATEDDATE varchar(255), CREATIONDATE varchar(255), COUNTRY varchar(255), STATE varchar(255), STATE_DESC varchar(255), CITY varchar(255), LAT varchar(255), LON varchar(255), PORT80STATUS varchar(255), PORT443STATUS varchar(255), PRIMARY KEY(ID));
 EOF
 
 #Create a directory to store the files that will be generate below
@@ -77,8 +77,13 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
 		gilLon="$(geoiplookup -f $GEOIP $line | awk -F',' '{print $8}' | sed -e 's/Rev 1://g' | tr -cd 'A-Za-z0-9_.-' )"
 
         sleep 0.1
+        sleep 0.1
+        nmap80="$(nmap $line | grep 80 | awk  '{print $2}' | tr -cd 'A-Za-z0-9_.-')"
+
+        sleep 0.1
+        nmap443="$(nmap $line | grep 443 | awk  '{print $2}' | tr -cd 'A-Za-z0-9_.-')"
 		webkit-image-gtk http://$line > ./$filename/$line.png
-	mysql --user=$DB_USER --password=$DB_PASS $filename -e 'INSERT INTO '$filename' (DOMAIN, LOOKUP_1, LOOKUP_2, LOOKUP_3, DOMAINNAME, UPDATEDDATE, CREATIONDATE, COUNTRY, STATE, STATE_DESC, CITY, LAT, LON) VALUES ("'$line'", "'$nsl1'", "'$nsl2'", "'$nsl3'", "'$whsdn'", "'$whsud'", "'$whscd'", "'$gilCountry'", "'$gilState'", "'$gilStateDesc'", "'$gilCity'", "'$gilLat'", "'$gilLon'");'
+	mysql --user=$DB_USER --password=$DB_PASS $filename -e 'INSERT INTO '$filename' (DOMAIN, LOOKUP_1, LOOKUP_2, LOOKUP_3, DOMAINNAME, UPDATEDDATE, CREATIONDATE, COUNTRY, STATE, STATE_DESC, CITY, LAT, LON, PORT80STATUS, PORT443STATUS) VALUES ("'$line'", "'$nsl1'", "'$nsl2'", "'$nsl3'", "'$whsdn'", "'$whsud'", "'$whscd'", "'$gilCountry'", "'$gilState'", "'$gilStateDesc'", "'$gilCity'", "'$gilLat'", "'$gilLon'", "'$nmap80'", "'$nmap443'");'
 done < "$filepath"
 
 #Removes unwanted files
