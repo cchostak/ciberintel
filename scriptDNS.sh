@@ -67,9 +67,18 @@ done < "./$filename/$filename.dns"
 while IFS='' read -r line || [[ -n "$line" ]]; do
 		head="address=/"
 		tail="/127.0.0.1"
-		$head$line$tail >> /etc/NetworkManager/dnsmasq.d/local
-		$head$line$tail >> /etc/dnsmasq.conf
+		iptables -A INPUT -m string --string "$line" --algo kmp --to 65535 -j DROP
+		echo $head$line$tail >> /etc/NetworkManager/dnsmasq.d/local
+		echo $head$line$tail >> /etc/dnsmasq.conf
 done < "./$filename/blacklist/immortal_domains.txt"
+
+# while IFS='' read -r line || [[ -n "$line" ]]; do
+# 		head="address=/"
+# 		tail="/127.0.0.1"
+# 		iptables -A INPUT -m string --string "$line" --algo kmp --to 65535 -j DROP
+# 		echo $head$line$tail >> /etc/NetworkManager/dnsmasq.d/local
+# 		echo $head$line$tail >> /etc/dnsmasq.conf
+# done < "./$filename/blacklist/black.domains"
 
 service network-manager restart
 service dnsmasq restart
