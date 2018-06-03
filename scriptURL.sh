@@ -90,7 +90,9 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
 		gilLon="$(geoiplookup -f $GEOIP $line | awk -F',' '{print $8}' | sed -e 's/Rev 1://g' | tr -cd 'A-Za-z0-9_.-' )"
 
         sleep 0.1
-	mysql --user=$DB_USER --password=$DB_PASS $filepath -e 'INSERT INTO '$filepath' (DOMAIN, LOOKUP_1, LOOKUP_2, LOOKUP_3, DOMAINNAME, UPDATEDDATE, CREATIONDATE, COUNTRY, STATE, STATE_DESC, CITY, LAT, LON) VALUES ("'$line'", "'$nsl1'", "'$nsl2'", "'$nsl3'", "'$whsdn'", "'$whsud'", "'$whscd'", "'$gilCountry'", "'$gilState'", "'$gilStateDesc'", "'$gilCity'", "'$gilLat'", "'$gilLon'");'
+	    
+        mysql --user=$DB_USER --password=$DB_PASS $filepath -e 'INSERT INTO '$filepath' (DOMAIN, LOOKUP_1, LOOKUP_2, LOOKUP_3, DOMAINNAME, UPDATEDDATE, CREATIONDATE, COUNTRY, STATE, STATE_DESC, CITY, LAT, LON) VALUES ("'$line'", "'$nsl1'", "'$nsl2'", "'$nsl3'", "'$whsdn'", "'$whsud'", "'$whscd'", "'$gilCountry'", "'$gilState'", "'$gilStateDesc'", "'$gilCity'", "'$gilLat'", "'$gilLon'");'
+
 done < "./$url/$url.txt"
 
 #Removes unwanted files

@@ -85,8 +85,11 @@ while IFS='' read -r line || [[ -n "$line" ]]; do
 
         sleep 0.1
         nmap443="$(nmap $line | grep 443 | awk  '{print $2}' | tr -cd 'A-Za-z0-9_.-')"
+
 		webkit-image-gtk http://$line > ./$filename/$line.png
-	mysql --user=$DB_USER --password=$DB_PASS $filename -e 'INSERT INTO '$filename' (DOMAIN, LOOKUP_1, LOOKUP_2, LOOKUP_3, DOMAINNAME, UPDATEDDATE, CREATIONDATE, COUNTRY, STATE, STATE_DESC, CITY, LAT, LON, PORT80STATUS, PORT443STATUS) VALUES ("'$line'", "'$nsl1'", "'$nsl2'", "'$nsl3'", "'$whsdn'", "'$whsud'", "'$whscd'", "'$gilCountry'", "'$gilState'", "'$gilStateDesc'", "'$gilCity'", "'$gilLat'", "'$gilLon'", "'$nmap80'", "'$nmap443'");'
+
+	    mysql --user=$DB_USER --password=$DB_PASS $filename -e 'INSERT INTO '$filename' (DOMAIN, LOOKUP_1, LOOKUP_2, LOOKUP_3, DOMAINNAME, UPDATEDDATE, CREATIONDATE, COUNTRY, STATE, STATE_DESC, CITY, LAT, LON, PORT80STATUS, PORT443STATUS) VALUES ("'$line'", "'$nsl1'", "'$nsl2'", "'$nsl3'", "'$whsdn'", "'$whsud'", "'$whscd'", "'$gilCountry'", "'$gilState'", "'$gilStateDesc'", "'$gilCity'", "'$gilLat'", "'$gilLon'", "'$nmap80'", "'$nmap443'");'
+
 done < "$filepath"
 
 #Removes unwanted files

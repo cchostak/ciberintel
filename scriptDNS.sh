@@ -58,18 +58,21 @@ awk 'FNR==NR{a[$1];next}($1 in a){print}' ./$filename/blacklist/immortal_domains
 
 #Create algorithm to score domain name
 while IFS='' read -r line || [[ -n "$line" ]]; do
-#       year="$(whois $line | awk '/Creation Date:/ {print $3}' | awk '{print substr($1,1,4)}')"
-#       if [ "$year" > 0 ]
-#       then
         bytes="$(echo $line | ent -t | awk -F',' 'FNR==2{print $2}')"
         chiScore="$(echo $line | ent -t | awk -F',' 'FNR==2{print $4}')"
-#       score="$(echo $line | ent -t | awk -F',' '{print $3}' | sed -e '/Entropy/d')"
         score="$(echo "scale=2;($bytes * $chiScore)/1000" | bc -l)"
         echo  DOMAIN ANALIZED:  $line, SCORE GIVEN:      $score, A VALUE GREATER THAN 15 IS HIGHLY RISKY $'\r'  >> ./$filename/greylist/grey.domains
-#       else
-#               echo $line SCORE 5
-#       fi
 done < "./$filename/$filename.dns"
+
+while IFS='' read -r line || [[ -n "$line" ]]; do
+		head="address=/"
+		tail="/127.0.0.1"
+		$head$line$tail >> /etc/NetworkManager/dnsmasq.d/local
+		$head$line$tail >> /etc/dnsmasq.conf
+done < "./$filename/blacklist/immortal_domains.txt"
+
+service network-manager restart
+service dnsmasq restart
 
 rm -rf ./$filename/$filename.dns1
 
